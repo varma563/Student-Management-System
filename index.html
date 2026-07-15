@@ -1,0 +1,1141 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Management System | Dockerized App Deployment on EC2</title>
+
+<!-- Font Awesome CDN for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+  /* ============================================
+     ROOT VARIABLES - Blue & White Theme
+  ============================================ */
+  :root {
+    --primary-blue: #1957d6;
+    --deep-blue: #0f3a8f;
+    --light-blue: #eaf1fd;
+    --sky-blue: #4a8dff;
+    --white: #ffffff;
+    --off-white: #f6f9ff;
+    --text-dark: #16233d;
+    --text-muted: #5b6b8c;
+    --border-light: #dfe7f7;
+    --shadow-soft: 0 4px 16px rgba(21, 60, 140, 0.08);
+    --shadow-hover: 0 10px 26px rgba(21, 60, 140, 0.16);
+    --radius: 14px;
+  }
+
+  /* ============================================
+     RESET & BASE
+  ============================================ */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    color: var(--text-dark);
+    background: var(--off-white);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  a { text-decoration: none; color: inherit; }
+  ul { list-style: none; }
+  img { max-width: 100%; display: block; }
+
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section {
+    padding: 80px 0;
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 48px auto;
+  }
+
+  .section-header .tag {
+    color: var(--primary-blue);
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+
+  .section-header h2 {
+    font-size: 32px;
+    margin-top: 8px;
+    color: var(--text-dark);
+  }
+
+  .section-header p {
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-size: 15px;
+  }
+
+  /* ============================================
+     FADE-IN ANIMATION (subtle, on scroll)
+  ============================================ */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ============================================
+     BUTTONS
+  ============================================ */
+  .btn {
+    display: inline-block;
+    padding: 13px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+    color: var(--white);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* ============================================
+     NAVIGATION BAR
+  ============================================ */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--deep-blue);
+  }
+
+  .logo i {
+    background: linear-gradient(135deg, var(--primary-blue), var(--sky-blue));
+    color: var(--white);
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 28px;
+  }
+
+  .nav-links a {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--text-dark);
+    position: relative;
+    padding: 6px 0;
+    transition: color 0.2s ease;
+  }
+
+  .nav-links a:hover {
+    color: var(--primary-blue);
+  }
+
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 0;
+    background: var(--primary-blue);
+    transition: width 0.25s ease;
+  }
+
+  .nav-links a:hover::after {
+    width: 100%;
+  }
+
+  .menu-toggle {
+    display: none;
+    font-size: 22px;
+    color: var(--deep-blue);
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  /* ============================================
+     HERO SECTION
+  ============================================ */
+  .hero {
+    background: linear-gradient(135deg, var(--light-blue) 0%, var(--white) 60%);
+    padding: 90px 0 70px 0;
+  }
+
+  .hero-inner {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .hero-text {
+    flex: 1;
+  }
+
+  .hero-text h1 {
+    font-size: 42px;
+    color: var(--deep-blue);
+    line-height: 1.25;
+  }
+
+  .hero-text p {
+    margin: 18px 0 28px 0;
+    color: var(--text-muted);
+    font-size: 16.5px;
+    max-width: 480px;
+  }
+
+  /* Pure CSS illustration - student with book/graduation cap */
+  .hero-illustration {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .illustration-frame {
+    width: 340px;
+    height: 340px;
+    position: relative;
+  }
+
+  .illus-circle {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sky-blue), var(--primary-blue));
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    opacity: 0.15;
+  }
+
+  /* Book (base) */
+  .illus-book {
+    position: absolute;
+    bottom: 60px;
+    left: 70px;
+    width: 200px;
+    height: 26px;
+    background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+    border-radius: 6px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .illus-book::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: rgba(255,255,255,0.5);
+    transform: translateX(-50%);
+  }
+
+  /* Graduation cap */
+  .illus-cap {
+    position: absolute;
+    top: 40px;
+    left: 100px;
+    width: 140px;
+    height: 70px;
+  }
+
+  .cap-top {
+    width: 140px;
+    height: 14px;
+    background: var(--deep-blue);
+    transform: rotate(-2deg);
+    border-radius: 2px;
+    position: absolute;
+    top: 0;
+  }
+
+  .cap-base {
+    width: 70px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-blue), var(--sky-blue));
+    border-radius: 4px 4px 12px 12px;
+    position: absolute;
+    top: 12px;
+    left: 35px;
+  }
+
+  .cap-string {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 2px;
+    height: 40px;
+    background: #f5c344;
+    transform: rotate(10deg);
+  }
+
+  .cap-string::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: -4px;
+    width: 10px;
+    height: 10px;
+    background: #f5c344;
+    border-radius: 50%;
+  }
+
+  /* Pencil accent */
+  .illus-pencil {
+    position: absolute;
+    bottom: 90px;
+    right: 40px;
+    width: 12px;
+    height: 100px;
+    background: linear-gradient(var(--sky-blue), var(--primary-blue));
+    border-radius: 6px;
+    transform: rotate(25deg);
+  }
+
+  .illus-pencil::after {
+    content: "";
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 12px solid #f5c344;
+  }
+
+  /* ============================================
+     DASHBOARD CARDS
+  ============================================ */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .dash-card {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 26px;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .dash-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .dash-icon {
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-blue), var(--sky-blue));
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .dash-info h3 {
+    font-size: 24px;
+    color: var(--deep-blue);
+  }
+
+  .dash-info p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ============================================
+     STUDENT TABLE
+  ============================================ */
+  .table-wrapper {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    overflow-x: auto;
+    border: 1px solid var(--border-light);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 620px;
+  }
+
+  thead {
+    background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+  }
+
+  thead th {
+    color: var(--white);
+    text-align: left;
+    padding: 16px 20px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  tbody td {
+    padding: 15px 20px;
+    font-size: 14.5px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-dark);
+  }
+
+  tbody tr:hover {
+    background: var(--light-blue);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .badge-green { background: #e3f8ea; color: #1f9d55; }
+  .badge-blue  { background: var(--light-blue); color: var(--primary-blue); }
+  .badge-amber { background: #fdf3e0; color: #b3791d; }
+
+  /* ============================================
+     FEATURES SECTION
+  ============================================ */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .feature-card {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 30px 26px;
+    text-align: left;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .feature-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: var(--light-blue);
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .feature-card h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+  }
+
+  .feature-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  /* ============================================
+     AWS DEPLOYMENT SECTION (Flow)
+  ============================================ */
+  .deploy-section {
+    background: linear-gradient(180deg, var(--off-white), var(--light-blue));
+  }
+
+  .flow-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .flow-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 18px 24px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .flow-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .flow-card i {
+    font-size: 20px;
+    color: var(--white);
+    background: linear-gradient(135deg, var(--primary-blue), var(--sky-blue));
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flow-card span {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-dark);
+  }
+
+  .flow-arrow {
+    color: var(--primary-blue);
+    font-size: 20px;
+  }
+
+  /* ============================================
+     TECHNOLOGIES SECTION
+  ============================================ */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+  }
+
+  .tech-card {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 26px 16px;
+    text-align: center;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .tech-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .tech-card i {
+    font-size: 30px;
+    color: var(--primary-blue);
+    margin-bottom: 12px;
+  }
+
+  .tech-card p {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-dark);
+  }
+
+  /* ============================================
+     CONTACT SECTION
+  ============================================ */
+  .contact-box {
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 40px;
+    text-align: center;
+  }
+
+  .contact-box i {
+    font-size: 34px;
+    color: var(--primary-blue);
+    margin-bottom: 16px;
+  }
+
+  .contact-box h3 {
+    font-size: 21px;
+    color: var(--deep-blue);
+    margin-bottom: 6px;
+  }
+
+  .contact-box p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  /* ============================================
+     FOOTER
+  ============================================ */
+  footer {
+    background: var(--deep-blue);
+    color: #dce7fb;
+    text-align: center;
+    padding: 36px 20px;
+    font-size: 14px;
+  }
+
+  footer p {
+    margin: 4px 0;
+  }
+
+  footer .footer-title {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--white);
+  }
+
+  /* ============================================
+     RESPONSIVE - TABLET & MOBILE
+  ============================================ */
+  @media (max-width: 900px) {
+    .cards-grid,
+    .features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tech-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .hero-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .hero-text p {
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .nav-links {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      flex-direction: column;
+      gap: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .nav-links.open {
+      max-height: 400px;
+    }
+
+    .nav-links a {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .menu-toggle {
+      display: block;
+    }
+
+    .hero-text h1 {
+      font-size: 30px;
+    }
+
+    .illustration-frame {
+      width: 260px;
+      height: 260px;
+      transform: scale(0.85);
+    }
+
+    .cards-grid,
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tech-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    section {
+      padding: 56px 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============================================
+       NAVIGATION BAR
+  ============================================ -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="logo">
+        <i class="fa-solid fa-graduation-cap"></i>
+        Student Management System
+      </div>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#dashboard">Dashboard</a></li>
+        <li><a href="#students">Students</a></li>
+        <li><a href="#features">Courses</a></li>
+        <li><a href="#dashboard">Attendance</a></li>
+        <li><a href="#students">Results</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============================================
+       HERO SECTION
+  ============================================ -->
+  <section class="hero" id="home">
+    <div class="hero-inner">
+      <div class="hero-text fade-in">
+        <h1>Student Management System</h1>
+        <p>Dockerized App Deployment on Amazon EC2 using Docker and Nginx</p>
+        <a href="#dashboard" class="btn btn-primary">Explore Dashboard</a>
+      </div>
+
+      <!-- Pure CSS illustration -->
+      <div class="hero-illustration fade-in">
+        <div class="illustration-frame">
+          <div class="illus-circle"></div>
+          <div class="illus-cap">
+            <div class="cap-top"></div>
+            <div class="cap-base"></div>
+            <div class="cap-string"></div>
+          </div>
+          <div class="illus-book"></div>
+          <div class="illus-pencil"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       DASHBOARD CARDS
+  ============================================ -->
+  <section id="dashboard">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="tag">Overview</span>
+        <h2>Dashboard Summary</h2>
+        <p>A quick snapshot of the institution's academic activity.</p>
+      </div>
+
+      <div class="cards-grid">
+        <div class="dash-card fade-in">
+          <div class="dash-icon"><i class="fa-solid fa-user-graduate"></i></div>
+          <div class="dash-info">
+            <h3>1,240</h3>
+            <p>Total Students</p>
+          </div>
+        </div>
+
+        <div class="dash-card fade-in">
+          <div class="dash-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+          <div class="dash-info">
+            <h3>85</h3>
+            <p>Faculty Members</p>
+          </div>
+        </div>
+
+        <div class="dash-card fade-in">
+          <div class="dash-icon"><i class="fa-solid fa-book"></i></div>
+          <div class="dash-info">
+            <h3>32</h3>
+            <p>Courses</p>
+          </div>
+        </div>
+
+        <div class="dash-card fade-in">
+          <div class="dash-icon"><i class="fa-solid fa-calendar-check"></i></div>
+          <div class="dash-info">
+            <h3>92%</h3>
+            <p>Attendance</p>
+          </div>
+        </div>
+
+        <div class="dash-card fade-in">
+          <div class="dash-icon"><i class="fa-solid fa-building-columns"></i></div>
+          <div class="dash-info">
+            <h3>6</h3>
+            <p>Departments</p>
+          </div>
+        </div>
+
+        <div class="dash-card fade-in">
+          <div class="dash-icon"><i class="fa-solid fa-briefcase"></i></div>
+          <div class="dash-info">
+            <h3>410</h3>
+            <p>Placements</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       STUDENT TABLE
+  ============================================ -->
+  <section id="students" style="background:var(--white);">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="tag">Records</span>
+        <h2>Student Details</h2>
+        <p>Sample academic records maintained by the system.</p>
+      </div>
+
+      <div class="table-wrapper fade-in">
+        <table>
+          <thead>
+            <tr>
+              <th>Roll Number</th>
+              <th>Student Name</th>
+              <th>Department</th>
+              <th>Attendance</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CSE-101</td>
+              <td>Ananya Sharma</td>
+              <td>Computer Science</td>
+              <td><span class="badge badge-green">96%</span></td>
+              <td><span class="badge badge-blue">A+</span></td>
+            </tr>
+            <tr>
+              <td>ECE-102</td>
+              <td>Rohan Verma</td>
+              <td>Electronics</td>
+              <td><span class="badge badge-amber">78%</span></td>
+              <td><span class="badge badge-blue">B+</span></td>
+            </tr>
+            <tr>
+              <td>MECH-103</td>
+              <td>Priya Nair</td>
+              <td>Mechanical</td>
+              <td><span class="badge badge-green">91%</span></td>
+              <td><span class="badge badge-blue">A</span></td>
+            </tr>
+            <tr>
+              <td>CSE-104</td>
+              <td>Karthik Iyer</td>
+              <td>Computer Science</td>
+              <td><span class="badge badge-green">88%</span></td>
+              <td><span class="badge badge-blue">A</span></td>
+            </tr>
+            <tr>
+              <td>CIVIL-105</td>
+              <td>Sneha Reddy</td>
+              <td>Civil Engineering</td>
+              <td><span class="badge badge-amber">74%</span></td>
+              <td><span class="badge badge-blue">B</span></td>
+            </tr>
+            <tr>
+              <td>EEE-106</td>
+              <td>Arjun Mehta</td>
+              <td>Electrical</td>
+              <td><span class="badge badge-green">95%</span></td>
+              <td><span class="badge badge-blue">A+</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       FEATURES SECTION
+  ============================================ -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="tag">Capabilities</span>
+        <h2>Core Features</h2>
+        <p>Everything needed to manage academic operations in one place.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <div class="feature-icon"><i class="fa-solid fa-user-plus"></i></div>
+          <h3>Student Registration</h3>
+          <p>Register and maintain complete student profiles with ease.</p>
+        </div>
+
+        <div class="feature-card fade-in">
+          <div class="feature-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+          <h3>Attendance Management</h3>
+          <p>Track daily attendance and generate accurate reports.</p>
+        </div>
+
+        <div class="feature-card fade-in">
+          <div class="feature-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <h3>Course Management</h3>
+          <p>Organize courses, subjects, and department mapping.</p>
+        </div>
+
+        <div class="feature-card fade-in">
+          <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+          <h3>Result Management</h3>
+          <p>Record and analyze student grades and performance.</p>
+        </div>
+
+        <div class="feature-card fade-in">
+          <div class="feature-icon"><i class="fa-solid fa-chalkboard-teacher"></i></div>
+          <h3>Faculty Management</h3>
+          <p>Manage faculty details, workload, and departments.</p>
+        </div>
+
+        <div class="feature-card fade-in">
+          <div class="feature-icon"><i class="fa-solid fa-file-lines"></i></div>
+          <h3>Reports</h3>
+          <p>Generate summarized academic and administrative reports.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       AWS DEPLOYMENT ARCHITECTURE
+  ============================================ -->
+  <section id="deployment" class="deploy-section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="tag">Infrastructure</span>
+        <h2>AWS Deployment Architecture</h2>
+        <p>How this application is deployed using Docker on Amazon EC2.</p>
+      </div>
+
+      <div class="flow-wrapper">
+        <div class="flow-card fade-in">
+          <i class="fa-solid fa-globe"></i>
+          <span>Internet</span>
+        </div>
+        <i class="fa-solid fa-chevron-down flow-arrow"></i>
+
+        <div class="flow-card fade-in">
+          <i class="fa-brands fa-aws"></i>
+          <span>Amazon EC2</span>
+        </div>
+        <i class="fa-solid fa-chevron-down flow-arrow"></i>
+
+        <div class="flow-card fade-in">
+          <i class="fa-brands fa-docker"></i>
+          <span>Docker Engine</span>
+        </div>
+        <i class="fa-solid fa-chevron-down flow-arrow"></i>
+
+        <div class="flow-card fade-in">
+          <i class="fa-solid fa-box"></i>
+          <span>Docker Container</span>
+        </div>
+        <i class="fa-solid fa-chevron-down flow-arrow"></i>
+
+        <div class="flow-card fade-in">
+          <i class="fa-solid fa-server"></i>
+          <span>Nginx</span>
+        </div>
+        <i class="fa-solid fa-chevron-down flow-arrow"></i>
+
+        <div class="flow-card fade-in">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>Student Management System</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       TECHNOLOGIES USED
+  ============================================ -->
+  <section id="technologies" style="background:var(--white);">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="tag">Tech Stack</span>
+        <h2>Technologies Used</h2>
+        <p>The tools and services powering this project.</p>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-card fade-in">
+          <i class="fa-brands fa-aws"></i>
+          <p>Amazon EC2</p>
+        </div>
+        <div class="tech-card fade-in">
+          <i class="fa-brands fa-docker"></i>
+          <p>Docker</p>
+        </div>
+        <div class="tech-card fade-in">
+          <i class="fa-solid fa-server"></i>
+          <p>Nginx</p>
+        </div>
+        <div class="tech-card fade-in">
+          <i class="fa-brands fa-linux"></i>
+          <p>Amazon Linux 2023</p>
+        </div>
+        <div class="tech-card fade-in">
+          <i class="fa-brands fa-html5"></i>
+          <p>HTML5</p>
+        </div>
+        <div class="tech-card fade-in">
+          <i class="fa-brands fa-css3-alt"></i>
+          <p>CSS3</p>
+        </div>
+        <div class="tech-card fade-in">
+          <i class="fa-brands fa-js"></i>
+          <p>JavaScript</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       CONTACT SECTION
+  ============================================ -->
+  <section id="contact">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="tag">Get In Touch</span>
+        <h2>Contact</h2>
+        <p>Project information and academic details.</p>
+      </div>
+
+      <div class="contact-box fade-in">
+        <i class="fa-solid fa-school"></i>
+        <h3>ABC Institute of Technology</h3>
+        <p>AWS DevOps Internship Project</p>
+        <p>Student Management System</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       FOOTER
+  ============================================ -->
+  <footer>
+    <p class="footer-title">&copy; 2026 Student Management System</p>
+    <p>Dockerized App Deployment on EC2</p>
+    <p>Powered by AWS EC2 | Docker | Nginx</p>
+  </footer>
+
+  <!-- ============================================
+       JAVASCRIPT
+  ============================================ -->
+  <script>
+    // Mobile navigation toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+
+    menuToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+    });
+
+    // Close mobile menu when a link is clicked
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+      });
+    });
+
+    // Subtle fade-in animation on scroll using IntersectionObserver
+    const fadeElements = document.querySelectorAll('.fade-in');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    fadeElements.forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
+
+
